@@ -1,0 +1,48 @@
+---
+  - name: alperauto101
+    hosts: casestudy
+    remote_user: ec2-user
+    become: yes
+    
+    tasks:
+    - name: install git
+      yum: name=git state=present
+
+    - name: pull github repository
+      ansible.builtin.git:
+        repo: 'https://github.com/hasanaday28/FlaskAPIwithMySQL'
+        dest: /home/ec2-user/auto101
+
+    - name: install docker
+      command: amazon-linux-extras install docker -y
+
+    - name: start docker
+      service: name=docker state=started enabled=yes
+
+    - name: copy .cfg and Dockerfile through destination
+      copy:
+        src: /mnt/c/Users/Alper/python101/docker_python/auto101case/
+        dest: /home/ec2-user/auto101
+
+    
+    - name: install pip module for docker module
+      yum: name=python-pip state=present
+
+    - name: install docker module
+      pip:
+        name: docker   
+
+
+    - name: build container image
+      docker_image:
+        name: "auto101:1.1"
+        build:
+          path: /home/ec2-user/auto101
+        state: present
+
+    - name: docker run
+      docker_container:
+        name: auto101run
+        image: "auto101:1.1"
+        state: started
+        ports: "80:80"
